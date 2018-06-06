@@ -1,11 +1,15 @@
 <?php
-namespace Paymetric;
 //
-//XiPay transaction class 
+//echo 'XiPay transaction class ';
 //All properties are per XiPay WS WSDL
 //
-//include_once(Mage::getBaseDir('lib'). DS . 'paymetric/BaseClass.php');
-use \Paymetric\BaseClass;
+//include_once('./sites/all/modules/commerce_paymetric/includes/lib/paymetric/BaseClass.php');
+//include_once('BaseClass.php');
+
+namespace Drupal\commerce_paymetric\lib;
+
+use Drupal\commerce_paymetric\lib\BaseClass;
+
 class PaymetricTransaction extends BaseClass
 {
     //
@@ -313,4 +317,5 @@ class PaymetricTransaction extends BaseClass
     }
 
 }
-class_alias('Paymetric\PaymetricTransaction', 'Paymetric_PaymetricTransaction');
+
+?>

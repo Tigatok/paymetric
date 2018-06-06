@@ -1,8 +1,10 @@
 <?php
-namespace Paymetric;
+
 //
-// Base response object with status code and message
+//echo 'Base response object with status code and message ';
 //
+namespace Drupal\commerce_paymetric\lib;
+
 define("STATUS_OK", 0);             //Call successfully made to server and get a response, 
                                     //though response may NOT be positive (like authorization failed)
 define("STATUS_CLIENT_ERROR", 1);   //Call failed within the realm of client (no response obtained)
@@ -13,4 +15,4 @@ class BaseResponse
     public $Status;
     public $Message;
 }
-class_alias('Paymetric\BaseResponse', 'Paymetric_BaseResponse');
+?>

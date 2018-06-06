@@ -1,11 +1,16 @@
 <?php
-namespace Paymetric;
+
 //
-//Base class for all XiPay classes 
+//echo 'Base class for all XiPay classes ';
 //encapsulating baisic property handling plus info items 
 //
-//include_once(Mage::getBaseDir('lib'). DS . 'paymetric/BaseCore.php');
-use \Paymetric\BaseCore;
+//include_once('./sites/all/modules/commerce_paymetric/includes/lib/paymetric/BaseCore.php');
+//include_once('BaseCore.php');
+
+namespace Drupal\commerce_paymetric\lib;
+
+use Drupal\commerce_paymetric\lib\BaseCore;
+
 class BaseClass extends BaseCore
 {
     protected $InfoItems; 
@@ -86,4 +91,5 @@ class BaseClass extends BaseCore
         $this->InfoItems = array();
     }    
 }
-class_alias('Paymetric\BaseClass', 'Paymetric_BaseClass');
+
+?>

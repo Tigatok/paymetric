@@ -1,10 +1,12 @@
 <?php
-namespace Paymetric;
+
 //
-//Base class for all XiPay classes 
-//encapsulating baisic property handling plus info items 
+//echo 'Base core for all XiPay classes ';
+//encapsulating basic property handling plus info items 
 //
-die;
+
+namespace Drupal\commerce_paymetric\lib;
+
 class BaseCore
 {
     protected $PropertyList; 
@@ -83,4 +85,5 @@ class BaseCore
         $this->$key = $value;
     }
 }
-class_alias('Paymetric\BaseCore', 'Paymetric_BaseCore');
+
+?>

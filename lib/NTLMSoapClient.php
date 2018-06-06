@@ -1,5 +1,4 @@
 <?php
-namespace Paymetric;
 /*
  * Copyright (c) 2008 Invest-In-France Agency http://www.invest-in-france.org
  *
@@ -17,6 +16,13 @@ namespace Paymetric;
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+//echo 'NTMLSoapClient LOADED! ';
+
+namespace Drupal\commerce_paymetric\lib;
+use \SoapClient;
+
+
 
 class NTLMStream {
 	private $path;
@@ -206,4 +212,5 @@ class NTLMSoapClient extends SoapClient {
 		return implode("\n", $this->__last_request_headers)."\n";
 	}
 }
-class_alias('Paymetric\NTLMStream', 'Paymetric_NTLMStream');
+
+?>

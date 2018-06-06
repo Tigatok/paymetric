@@ -1,9 +1,12 @@
 <?php
-namespace Paymetric;
+
 //
-//static class XiPaySoapOpTemplate to encapsulate XML payload structures 
+//echo 'static class XiPaySoapOpTemplate to encapsulate XML payload structures  ';
 //
 //
+
+namespace Drupal\commerce_paymetric\lib;
+
 class XiPaySoapOpTemplate{
 
 //
@@ -284,4 +287,4 @@ static public function PrepareCheckImageXML($checkImage)
 						self::$XiPayCheckImageTemplate);
 }
 }
-class_alias('Paymetric\XiPaySoapOpTemplate', 'Paymetric_XiPaySoapOpTemplate');
+?>
