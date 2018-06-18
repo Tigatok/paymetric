@@ -5,6 +5,7 @@
 //encapsulating baisic property handling plus info items 
 //
 
+//This is a test
 class BaseCore
 {
     protected $PropertyList; 
