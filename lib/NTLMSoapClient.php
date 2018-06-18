@@ -17,13 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-//echo 'NTMLSoapClient LOADED! ';
-
-namespace Drupal\commerce_paymetric\lib;
-use \SoapClient;
-
-
-
 class NTLMStream {
 	private $path;
 	private $mode;

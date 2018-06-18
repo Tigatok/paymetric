@@ -1,12 +1,9 @@
 <?php
 
 //
-//echo 'static class XiPaySoapOpTemplate to encapsulate XML payload structures  ';
+//static class XiPaySoapOpTemplate to encapsulate XML payload structures 
 //
 //
-
-namespace Drupal\commerce_paymetric\lib;
-
 class XiPaySoapOpTemplate{
 
 //

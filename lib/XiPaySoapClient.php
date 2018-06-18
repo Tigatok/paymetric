@@ -1,269 +1,20 @@
 <?php
 
 //
-//echo 'NTLMSoapClient.php is a 3rd party workaround for NTLM authentication. ';
+//NTLMSoapClient.php is a 3rd party workaround for NTLM authentication. 
 //one must use this or similar techiques in order to make PHP Soap Extention 
 //work against .NET Web Services.
 //
 
+include_once('./sites/all/modules/commerce_paymetric/includes/lib/paymetric/NTLMSoapClient.php');
+include_once('./sites/all/modules/commerce_paymetric/includes/lib/paymetric/XiPaySoapOpTemplate.php');
+include_once('./sites/all/modules/commerce_paymetric/includes/lib/paymetric/TransactionResponse.php');
 //
-//XiPaySoapClient - call XiPayWS from this class
+//XiPaySoapClient - call XiPayWS from this class 
 //
+class XiPaySoapClient extends NTLMSoapClient {
 
-
-namespace Drupal\commerce_paymetric\lib;
-use \SimpleXMLElement;
-
-use Symfony\Component\DependencyInjection\ContainerAwareInterface;
-use Symfony\Component\DependencyInjection\ContainerAwareTrait;
-
-// All available StreamWrapper classes and interfaces
-//---------------------------------------------------
-use Drupal\Core\StreamWrapper\LocalReadOnlyStream;
-use Drupal\Core\StreamWrapper\LocalStream;
-use Drupal\Core\StreamWrapper\PhpStreamWrapperInterface;
-use Drupal\Core\StreamWrapper\PrivateStream;
-use Drupal\Core\StreamWrapper\PublicStream;
-use Drupal\Core\StreamWrapper\ReadOnlyStream;
-use Drupal\Core\StreamWrapper\StreamWrapperInterface;
-use Drupal\Core\StreamWrapper\StreamWrapperManager;
-use Drupal\Core\StreamWrapper\StreamWrapperManagerInterface;
-use Drupal\Core\StreamWrapper\TemporaryStream;
-
-
-use Drupal\commerce_paymetric\lib\NTLMSoapClient;
-use Drupal\commerce_paymetric\lib\XiPaySoapOpTemplate;
-use Drupal\commerce_paymetric\lib\TransactionResponse;
-
-
-
-class XiPaySoapClient extends NTLMSoapClient implements ContainerAwareInterface, StreamWrapperManagerInterface {
-
-    use ContainerAwareTrait;
-
-  /**
-   * Contains stream wrapper info.
-   *
-   * An associative array where keys are scheme names and values are themselves
-   * associative arrays with the keys class, type and (optionally) service_id,
-   * and string values.
-   *
-   * @var array
-   */
-  protected $info = [];
-
-  /**
-   * Contains collected stream wrappers.
-   *
-   * Keyed by filter, each value is itself an associative array keyed by scheme.
-   * Each of those values is an array representing a stream wrapper, with the
-   * following keys and values:
-   *   - class: stream wrapper class name
-   *   - type: a bitmask corresponding to the type constants in
-   *     StreamWrapperInterface
-   *   - service_id: name of service
-   *
-   * The array on key StreamWrapperInterface::ALL contains representations of
-   * all schemes and corresponding wrappers.
-   *
-   * @var array
-   */
-  protected $wrappers = [];
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getWrappers($filter = StreamWrapperInterface::ALL) {
-    if (isset($this->wrappers[$filter])) {
-      return $this->wrappers[$filter];
-    }
-    elseif (isset($this->wrappers[StreamWrapperInterface::ALL])) {
-      $this->wrappers[$filter] = [];
-      foreach ($this->wrappers[StreamWrapperInterface::ALL] as $scheme => $info) {
-
-        // Bit-wise filter.
-        if (($info['type'] & $filter) == $filter) {
-          $this->wrappers[$filter][$scheme] = $info;
-        }
-      }
-      return $this->wrappers[$filter];
-    }
-    else {
-      return [];
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getNames($filter = StreamWrapperInterface::ALL) {
-    $names = [];
-    foreach (array_keys($this
-      ->getWrappers($filter)) as $scheme) {
-      $names[$scheme] = $this
-        ->getViaScheme($scheme)
-        ->getName();
-    }
-    return $names;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getDescriptions($filter = StreamWrapperInterface::ALL) {
-    $descriptions = [];
-    foreach (array_keys($this
-      ->getWrappers($filter)) as $scheme) {
-      $descriptions[$scheme] = $this
-        ->getViaScheme($scheme)
-        ->getDescription();
-    }
-    return $descriptions;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getViaScheme($scheme) {
-    return $this
-      ->getWrapper($scheme, $scheme . '://');
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getViaUri($uri) {
-    $scheme = file_uri_scheme($uri);
-    return $this
-      ->getWrapper($scheme, $uri);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getClass($scheme) {
-    if (isset($this->info[$scheme])) {
-      return $this->info[$scheme]['class'];
-    }
-    return FALSE;
-  }
-
-  /**
-   * Returns a stream wrapper instance.
-   *
-   * @param string $scheme
-   *   The scheme of the desired stream wrapper.
-   * @param string $uri
-   *   The URI of the stream.
-   *
-   * @return \Drupal\Core\StreamWrapper\StreamWrapperInterface|bool
-   *   A stream wrapper object, or false if the scheme is not available.
-   */
-  protected function getWrapper($scheme, $uri) {
-    if (isset($this->info[$scheme]['service_id'])) {
-      $instance = $this->container
-        ->get($this->info[$scheme]['service_id']);
-      $instance
-        ->setUri($uri);
-      return $instance;
-    }
-    return FALSE;
-  }
-
-  /**
-   * Adds a stream wrapper.
-   *
-   * Internal use only.
-   *
-   * @param string $service_id
-   *   The service id.
-   * @param string $class
-   *   The stream wrapper class.
-   * @param string $scheme
-   *   The scheme for which the wrapper should be registered.
-   */
-  public function addStreamWrapper($service_id, $class, $scheme) {
-    $this->info[$scheme] = [
-      'class' => $class,
-      'type' => $class::getType(),
-      'service_id' => $service_id,
-    ];
-  }
-
-  /**
-   * Registers the tagged stream wrappers.
-   *
-   * Internal use only.
-   */
-  public function register() {
-    foreach ($this->info as $scheme => $info) {
-      $this
-        ->registerWrapper($scheme, $info['class'], $info['type']);
-    }
-  }
-
-  /**
-   * Unregisters the tagged stream wrappers.
-   *
-   * Internal use only.
-   */
-  public function unregister() {
-
-    // Normally, there are definitely wrappers set for the ALL filter. However,
-    // in some cases involving many container rebuilds (e.g. WebTestBase),
-    // $this->wrappers may be empty although wrappers are still registered
-    // globally. Thus an isset() check is needed before iterating.
-    if (isset($this->wrappers[StreamWrapperInterface::ALL])) {
-      foreach (array_keys($this->wrappers[StreamWrapperInterface::ALL]) as $scheme) {
-        stream_wrapper_unregister($scheme);
-      }
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function registerWrapper($scheme, $class, $type) {
-    echo 'registerWrapper called... <br>';
-    //echo 'Type is... '.$type.'<br>'; // Default flag is 0
-    //echo 'What is SWI::LOCAL? '.StreamWrapperInterface::LOCAL.'<br>'; // 1
-      
-    if (in_array($scheme, stream_get_wrappers(), TRUE)) {
-      echo 'Unregister "'.$scheme.'"...<br>';
-      stream_wrapper_unregister($scheme);
-    }
-    if (($type & StreamWrapperInterface::LOCAL) == StreamWrapperInterface::LOCAL) {
-      echo 'Register stream...<br>';
-      stream_wrapper_register($scheme, $class);
-    }
-    else {
-      echo 'Register stream with STREAM_IS_URL...<br>';
-      stream_wrapper_register($scheme, $class, STREAM_IS_URL);
-    }
-
-    // Pre-populate the static cache with the filters most typically used.
-    $info = [
-      'type' => $type,
-      'class' => $class,
-    ];
-    $this->wrappers[StreamWrapperInterface::ALL][$scheme] = $info;
-      
-    if (($type & StreamWrapperInterface::WRITE_VISIBLE) == StreamWrapperInterface::WRITE_VISIBLE) {
-      //echo 'Is this called?<br>'; // It is not
-      $this->wrappers[StreamWrapperInterface::WRITE_VISIBLE][$scheme] = $info;
-    }
-  }
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-//
+    //
     //Replace with your own username and password for logging in XiPay Web Service 
     //
     protected $user;
@@ -274,58 +25,22 @@ class XiPaySoapClient extends NTLMSoapClient implements ContainerAwareInterface,
     public $TraceFile;
 
     //
-    //Constructor for XIPaySoapClient
-    //Sets up the stream protocol handler
+    //Constructor 
     //    
     function __construct($XiPayServiceURL, $XiPayUser, $XiPayUserPassword){
     
         $this->serviceURL = $XiPayServiceURL;
-        $this->user = "paymetric\\".$XiPayUser; 
+        $this->user = "paymetric\\" .$XiPayUser; 
         $this->password = $XiPayUserPassword;
         
-        
-        
-       echo 'Construction begins here...v3<br>';
-        
-        // Display wrappers
-        //var_dump(stream_get_wrappers());
-        //array(13) { [0]=> string(5) "https" [1]=> string(4) "ftps" [2]=> string(13) "compress.zlib" [3]=> string(14) "compress.bzip2" [4]=> string(3) "php" [5]=> string(4) "file" [6]=> string(4) "glob" [7]=> string(4) "data" [8]=> string(3) "ftp" [9]=> string(4) "phar" [10]=> string(3) "zip" [11]=> string(6) "public" [12]=> string(9) "temporary" }
-        // NO http protocol?! // Tried https and it didn't work
-        
-        /*//Double-check protocol exists 
-        $existed = in_array("http", stream_get_wrappers());
-        
-        if ($existed) {
-            echo 'PROTOCOL EXISTS!! '.$this->serviceURL." :: ".$this->user." :: ".$this->password.'<br>';
-            stream_wrapper_unregister("http");
-        }
-        // Verified: PROTOCOL EXISTS!!*/
-        
-        
         //unregister the current HTTP wrapper
-        /*$testee = stream_wrapper_unregister('http');
-        echo $testee.'<br>'; // Returns 1 so the wrapper is unregistered */
-        //stream_wrapper_unregister('http');
-        
-        
-        $this->unregister();
-        echo 'Wrapper successfully unregistered...<br>';
-        
-        
-        //register the new HTTP wrapper
-        //Returns TRUE on success or FALSE on failure. 
-        //stream_wrapper_register() will return FALSE if the protocol already has a handler.
-        //stream_wrapper_register('http', 'XiPaySoapClient', STREAM_IS_URL) or die("----Failed to register XIPaySoapClient stream protocol -v3"); //FAILS! 
+        stream_wrapper_unregister('http');
 
-        //stream_wrapper_register('http', 'XiPaySoapClient') or die("----Failed to register XIPaySoapClient stream protocol -v7"); //FAILS! 
-        
-        $this->registerWrapper('http', 'Drupal\commerce_paymetric\lib\XiPaySoapClient', STREAM_IS_URL);
+        //register the new HTTP wrapper
+        stream_wrapper_register('http', 'XiPaySoapClient') or die("Failed to register protocol");
 
         //SoapClient without WSDL
-        parent::__construct(NULL, array("location" => $this->serviceURL, "uri" => $this->serviceURL));
-        
-        
-        
+        parent::__construct(NULL, array(	"location" => $this->serviceURL, "uri" => $this->serviceURL));
     }
 
     //

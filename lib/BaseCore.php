@@ -1,11 +1,9 @@
 <?php
 
 //
-//echo 'Base core for all XiPay classes ';
-//encapsulating basic property handling plus info items 
+//Base class for all XiPay classes 
+//encapsulating baisic property handling plus info items 
 //
-
-namespace Drupal\commerce_paymetric\lib;
 
 class BaseCore
 {
